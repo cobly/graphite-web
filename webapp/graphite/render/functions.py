@@ -39,6 +39,13 @@ DAY = 86400
 HOUR = 3600
 MINUTE = 60
 
+# Atlassian custom
+def nullDiff(values):
+  if None in values:
+    return None
+  else:
+    return safeDiff(values)
+
 #Utility functions
 def safeSum(values):
   safeValues = [v for v in values if v is not None]
@@ -226,6 +233,19 @@ def averageSeriesWithWildcards(requestContext, seriesList, *position): #XXX
     result.append( averageSeries(requestContext, (matchedList[name]))[0] )
     result[-1].name = name
   return result
+
+# Atlassian custom
+def diffNullSeries(requestContext, *seriesLists):
+  """
+  Implements diffSeries() using nullDiff() to set any combination of None values to None
+
+  """
+  (seriesList,start,end,step) = normalize(seriesLists)
+  name = "diffNullSeries(%s)" % ','.join(set([s.pathExpression for s in seriesList]))
+  values = ( nullDiff(row) for row in izip(*seriesList) )
+  series = TimeSeries(name,start,end,step,values)
+  series.pathExpression = name
+  return [series]
 
 def diffSeries(requestContext, *seriesLists):
   """
@@ -2623,6 +2643,9 @@ SeriesFunctions = {
   'pct' : asPercent,
   'diffSeries' : diffSeries,
   'divideSeries' : divideSeries,
+
+  # Atlassian custom
+  'diffNullSeries' : diffNullSeries,
 
   # Series Filter functions
   'mostDeviant' : mostDeviant,
